@@ -98,30 +98,47 @@ def slot_datetime(day: date, hh_mm: str, tz: ZoneInfo) -> datetime:
     return local.astimezone(dt_timezone.utc)
 
 
+def region_tz(schedule: dict, region: str) -> ZoneInfo:
+    region_cfg = schedule.get("regions", {}).get(region, {})
+    tz_name = region_cfg.get("timezone") or schedule.get("timezone", "UTC")
+    return ZoneInfo(tz_name)
+
+
 # ---------------------------------------------------------------------------
 # Building the merged spawn list
 # ---------------------------------------------------------------------------
 
 
 def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
-    tz = ZoneInfo(schedule.get("timezone", "UTC"))
-    today_local = now.astimezone(tz).date()
-    # Look at today and tomorrow (in the schedule's timezone) so we catch
-    # events just after local midnight too.
-    days = [today_local, today_local + timedelta(days=1)]
+    """
+    Layering, highest priority first:
+      1. overrides.yaml    — specific date, e.g. "on 2026-07-09 specifically..."
+      2. schedule.yaml `weekly`   — recurring by weekday, e.g. "every Wednesday..."
+      3. schedule.yaml `bosses`   — recurring every day (the generic fallback)
 
+    A higher layer suppresses a lower layer only when they land on the
+    exact same (date, region, time) slot — otherwise both fire.
+    """
     spawns: list[Spawn] = []
-    # (date_str, region, time) -> True, for suppressing the matching
-    # generic slot on that specific day.
-    suppressed: set[tuple[str, str, str]] = set()
+    suppressed: set[tuple[str, str, str]] = set()  # (date_str, region, time)
 
-    # --- overrides first, so we know what to suppress in the generic pass ---
-    for day in days:
-        day_str = day.isoformat()
-        day_overrides = overrides.get(day_str, {})
-        for region, entries in day_overrides.items():
-            if REGION_FILTER and region not in REGION_FILTER:
-                continue
+    regions_cfg = schedule.get("regions", {})
+
+    def days_for(region: str) -> list[date]:
+        tz = region_tz(schedule, region)
+        today_local = now.astimezone(tz).date()
+        return [today_local, today_local + timedelta(days=1)]
+
+    all_regions = set(overrides_regions(overrides)) | set(regions_cfg.keys())
+    if REGION_FILTER:
+        all_regions &= set(REGION_FILTER)
+
+    # --- layer 1: date-specific overrides ---
+    for region in all_regions:
+        tz = region_tz(schedule, region)
+        for day in days_for(region):
+            day_str = day.isoformat()
+            entries = overrides.get(day_str, {}).get(region, [])
             for entry in entries:
                 if TIER_FILTER and entry.get("tier") not in TIER_FILTER:
                     continue
@@ -136,12 +153,41 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                 )
                 suppressed.add((day_str, region, entry["time"]))
 
-    # --- generic recurring schedule, skipping suppressed slots ---
-    for day in days:
-        day_str = day.isoformat()
-        for region, bosses in schedule.get("regions", {}).items():
-            if REGION_FILTER and region not in REGION_FILTER:
-                continue
+    # --- layer 2: weekly recurring (e.g. "every Wednesday") ---
+    for region, region_cfg in regions_cfg.items():
+        if REGION_FILTER and region not in REGION_FILTER:
+            continue
+        tz = region_tz(schedule, region)
+        weekly_cfg = region_cfg.get("weekly", {})
+        for day in days_for(region):
+            day_str = day.isoformat()
+            weekday_name = day.strftime("%A")  # "Wednesday", etc.
+            for entry in weekly_cfg.get(weekday_name, []):
+                tier = entry.get("tier")
+                if TIER_FILTER and tier not in TIER_FILTER:
+                    continue
+                for hh_mm in entry["times"]:
+                    if (day_str, region, hh_mm) in suppressed:
+                        continue
+                    spawns.append(
+                        Spawn(
+                            region=region,
+                            name=entry["name"],
+                            tier=tier,
+                            at=slot_datetime(day, hh_mm, tz),
+                            source="weekly",
+                        )
+                    )
+                    suppressed.add((day_str, region, hh_mm))
+
+    # --- layer 3: daily generic ---
+    for region, region_cfg in regions_cfg.items():
+        if REGION_FILTER and region not in REGION_FILTER:
+            continue
+        tz = region_tz(schedule, region)
+        bosses = region_cfg.get("bosses", [])
+        for day in days_for(region):
+            day_str = day.isoformat()
             for boss in bosses:
                 tier = boss.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
@@ -160,6 +206,14 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                     )
 
     return spawns
+
+
+def overrides_regions(overrides: dict) -> list[str]:
+    regions = set()
+    for day_data in overrides.values():
+        if isinstance(day_data, dict):
+            regions.update(day_data.keys())
+    return list(regions)
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +241,7 @@ def format_message(spawn: Spawn) -> str:
     tier_label = f"T{spawn.tier} " if spawn.tier else ""
     mins = round(spawn.minutes_until)
     local_time = spawn.at.strftime("%H:%M UTC")
-    tag = " 📌" if spawn.source == "override" else ""
+    tag = {"override": " 📌", "weekly": " 🔁"}.get(spawn.source, "")
     return f"⏰ **{tier_label}{spawn.name}**{tag} ({spawn.region}) in ~{mins} min — {local_time}"
 
 
