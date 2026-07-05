@@ -1,0 +1,69 @@
+# Field boss / event schedule — edit this to match what you actually see in-game.
+#
+# All times are in 24h "HH:MM" format, in the timezone set below. questlog
+# displayed everything in UTC+0, so entries are seeded from that — verify
+# against your own server/region and adjust `timezone` and/or the times
+# if your server runs on a different clock.
+#
+# `times` is a list because a boss can spawn more than once a day.
+# `notify_minutes_before` is optional per-entry; falls back to the global
+# default in bot.py if omitted.
+
+timezone: "UTC"
+
+regions:
+  # Fill this in from what you see in-game — I don't have Americas-region
+  # times to seed this from (questlog's snippet we grabbed earlier was
+  # Europe-only). Use the Europe block below as a format reference.
+  # Left empty on purpose (rather than filled with placeholder "TODO"
+  # times) so the bot doesn't error out before you've populated it —
+  # an empty list here just means "no generic entries for Americas yet",
+  # which is safe.
+  #
+  # Example of the format once you have real times:
+  #   Americas:
+  #     - name: "Dynamic Events"
+  #       tier: null
+  #       times: ["03:00", "09:00", "16:00"]
+  #     - name: "T3 Ahzreil"
+  #       tier: 3
+  #       times: ["13:00"]
+  Americas: []
+
+  Europe:
+    - name: "T3 Nirma"
+      tier: 3
+      times: ["01:00"]
+    - name: "T2 Pakilo Naru"
+      tier: 2
+      times: ["01:00"]
+    - name: "Dynamic Events"
+      tier: null
+      times: ["03:00", "06:00", "09:00", "12:00", "16:00", "19:00", "21:00"]
+    - name: "T3 Ahzreil"
+      tier: 3
+      times: ["13:00"]
+    - name: "T2 Leviathan"
+      tier: 2
+      times: ["13:00", "23:00"]
+    - name: "T3 Excavator-9"
+      tier: 3
+      times: ["16:00"]
+    - name: "T2 Daigon"
+      tier: 2
+      times: ["16:00"]
+    - name: "T3 Minezerok"
+      tier: 3
+      times: ["20:00"]
+    - name: "T2 Manticus"
+      tier: 2
+      times: ["20:00"]
+    - name: "T3 Junobote"
+      tier: 3
+      times: ["23:00"]
+
+  # Add your other regions here, e.g.:
+  # Americas:
+  #   - name: "T3 Ahzreil"
+  #     tier: 3
+  #     times: ["..."]

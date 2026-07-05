@@ -1,0 +1,29 @@
+# Date-specific known events. Add a block for any day you have specifics
+# for; leave days out entirely and the generic schedule.yaml pattern
+# just runs as-is for that day.
+#
+# Format:
+#   YYYY-MM-DD:
+#     RegionName:
+#       - name: "..."
+#         tier: 3        # or null for non-tiered / guild events
+#         time: "HH:MM"  # in schedule.yaml's timezone
+#
+# If an entry here matches the SAME region + time as a generic entry in
+# schedule.yaml, the override replaces it for that day only (no duplicate
+# ping) — e.g. if schedule.yaml has a generic "Dynamic Events" at 19:00
+# Americas, and you add an override for Americas at 19:00 today, you'll
+# get the override's specific name instead of "Dynamic Events", once.
+#
+# If the time doesn't match anything in schedule.yaml, it's just an
+# additional one-off ping with no generic counterpart to replace.
+#
+# --- Worked example (delete once you've got real data in here) ---
+# 2026-07-05:
+#   Americas:
+#     - name: "Guild Siege vs Nova"
+#       tier: null
+#       time: "19:00"
+#     - name: "World Boss: Talus"
+#       tier: 3
+#       time: "13:00"
