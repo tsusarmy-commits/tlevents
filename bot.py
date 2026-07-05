@@ -183,6 +183,39 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                     )
                     suppressed.add((day_str, region, hh_mm))
 
+    # --- layer 2b: biweekly recurring (e.g. "every other Sunday", anchored
+    # to a confirmed occurrence date) ---
+    for region, region_cfg in regions_cfg.items():
+        if REGION_FILTER and region not in REGION_FILTER:
+            continue
+        tz = region_tz(schedule, region)
+        biweekly_cfg = region_cfg.get("biweekly", {})
+        for day in days_for(region):
+            day_str = day.isoformat()
+            weekday_name = day.strftime("%A")
+            for entry in biweekly_cfg.get(weekday_name, []):
+                anchor = date.fromisoformat(entry["anchor_date"])
+                interval = entry.get("interval_days", 14)
+                if day < anchor or (day - anchor).days % interval != 0:
+                    continue  # not an occurrence week
+                tier = entry.get("tier")
+                if TIER_FILTER and tier not in TIER_FILTER:
+                    continue
+                for hh_mm in entry["times"]:
+                    if (day_str, region, hh_mm) in suppressed:
+                        continue
+                    spawns.append(
+                        Spawn(
+                            region=region,
+                            name=entry["name"],
+                            tier=tier,
+                            at=slot_datetime(day, hh_mm, tz),
+                            local_label=hh_mm,
+                            source="biweekly",
+                        )
+                    )
+                    suppressed.add((day_str, region, hh_mm))
+
     # --- layer 3: daily generic ---
     for region, region_cfg in regions_cfg.items():
         if REGION_FILTER and region not in REGION_FILTER:
@@ -246,7 +279,7 @@ def format_message(spawn: Spawn) -> str:
     already_has_prefix = spawn.tier and spawn.name.startswith(tier_prefix)
     tier_label = "" if already_has_prefix or not spawn.tier else f"{tier_prefix} "
     mins = round(spawn.minutes_until)
-    tag = {"override": " 📌", "weekly": " 🔁"}.get(spawn.source, "")
+    tag = {"override": " 📌", "weekly": " 🔁", "biweekly": " 🔁"}.get(spawn.source, "")
     return f"⏰ **{tier_label}{spawn.name}**{tag} ({spawn.region}) in ~{mins} min — {spawn.local_label}"
 
 
