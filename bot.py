@@ -68,8 +68,9 @@ class Spawn:
     region: str
     name: str
     tier: int | None
-    at: datetime  # timezone-aware UTC
-    source: str  # "override" or "generic" — just useful for debugging/logs
+    at: datetime  # timezone-aware UTC, used for minutes_until math
+    local_label: str  # e.g. "20:00" — the clock time as entered in config, region-local
+    source: str  # "override", "weekly", or "generic" — for debugging/logs
 
     @property
     def key(self) -> str:
@@ -148,6 +149,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                         name=entry["name"],
                         tier=entry.get("tier"),
                         at=slot_datetime(day, entry["time"], tz),
+                        local_label=entry["time"],
                         source="override",
                     )
                 )
@@ -175,6 +177,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             name=entry["name"],
                             tier=tier,
                             at=slot_datetime(day, hh_mm, tz),
+                            local_label=hh_mm,
                             source="weekly",
                         )
                     )
@@ -201,6 +204,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             name=boss["name"],
                             tier=tier,
                             at=slot_datetime(day, hh_mm, tz),
+                            local_label=hh_mm,
                             source="generic",
                         )
                     )
@@ -238,11 +242,12 @@ def save_state(state: dict) -> None:
 
 
 def format_message(spawn: Spawn) -> str:
-    tier_label = f"T{spawn.tier} " if spawn.tier else ""
+    tier_prefix = f"T{spawn.tier}"
+    already_has_prefix = spawn.tier and spawn.name.startswith(tier_prefix)
+    tier_label = "" if already_has_prefix or not spawn.tier else f"{tier_prefix} "
     mins = round(spawn.minutes_until)
-    local_time = spawn.at.strftime("%H:%M UTC")
     tag = {"override": " 📌", "weekly": " 🔁"}.get(spawn.source, "")
-    return f"⏰ **{tier_label}{spawn.name}**{tag} ({spawn.region}) in ~{mins} min — {local_time}"
+    return f"⏰ **{tier_label}{spawn.name}**{tag} ({spawn.region}) in ~{mins} min — {spawn.local_label}"
 
 
 def post_to_discord(messages: list[str]) -> None:
