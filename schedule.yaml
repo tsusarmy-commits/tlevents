@@ -28,11 +28,39 @@ regions:
     weekly:
       Wednesday:
         - name: "Arch Boss"
-          tier: null  # update if you learn it's a specific tier
+          tier: null
           times: ["20:00", "23:00"]
-          # Assumed ADDITIVE to the regular 19:00/22:00 Field Bosses (i.e.
-          # both happen) since that wasn't confirmed — flip this out if
-          # it turns out Arch Boss replaces the regular spawn instead.
+      Saturday:
+        - name: "Arch Boss"
+          tier: null
+          times: ["20:00", "23:00"]
+        - name: "Interserver"
+          tier: null
+          times: ["22:30"]
+      Friday:
+        - name: "Interserver"
+          tier: null
+          times: ["22:30"]
+      Sunday:
+        - name: "Tax"
+          tier: null
+          times: ["21:00"]
+          # Note: this happens to land on the same slot as the daily
+          # "Dynamic Events" at 21:00, so on Sundays you'll see "Tax"
+          # instead of "Dynamic Events" at that specific time — not a
+          # bug, just how the suppression logic works (one ping per
+          # slot). Say the word if you'd rather see both.
+    biweekly:
+      Sunday:
+        - name: "Siege"
+          tier: null
+          times: ["20:30"]
+          anchor_date: "2026-07-05"  # confirmed Siege Sunday from your screenshot
+          interval_days: 14
+          # 2026-07-12 had no Siege in your screenshot, 2026-07-19 did —
+          # confirms this is a 14-day cadence, not weekly.
+      # All of the above (Arch Boss/Interserver/Tax/Siege) confirmed from
+      # your in-game weekly Timetable screenshot (5 Jul – 20 Jul window).
 
   Europe:
     timezone: "UTC"
