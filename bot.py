@@ -51,7 +51,11 @@ NOTIFY_MINUTES_BEFORE = int(os.environ.get("NOTIFY_MINUTES_BEFORE", "10"))
 
 # Comma-separated if you ever want more than one, e.g. "Americas,Europe".
 # Empty/unset = all regions in schedule.yaml.
-ACTIVE_REGION = os.environ.get("ACTIVE_REGION", "Americas")
+# Using `or` (not just .get's default) because GitHub Actions passes an
+# unset repo variable through as an empty string, not as missing — a
+# plain .get(..., "Americas") wouldn't have caught that and silently
+# fell through to "no filter" (all regions) instead of the intended default.
+ACTIVE_REGION = os.environ.get("ACTIVE_REGION") or "Americas"
 REGION_FILTER = [r.strip() for r in ACTIVE_REGION.split(",") if r.strip()]
 
 # Empty list = all tiers (including Dynamic Events / guild events, tier: null).
@@ -70,7 +74,8 @@ class Spawn:
     tier: int | None
     at: datetime  # timezone-aware UTC, used for minutes_until math
     local_label: str  # e.g. "20:00" — the clock time as entered in config, region-local
-    source: str  # "override", "weekly", or "generic" — for debugging/logs
+    source: str  # "override", "weekly", "biweekly", or "generic"
+    count: int | None = None  # e.g. 6 simultaneous Dynamic Events locations
 
     @property
     def key(self) -> str:
@@ -103,6 +108,16 @@ def region_tz(schedule: dict, region: str) -> ZoneInfo:
     region_cfg = schedule.get("regions", {}).get(region, {})
     tz_name = region_cfg.get("timezone") or schedule.get("timezone", "UTC")
     return ZoneInfo(tz_name)
+
+
+def parse_time_entry(t) -> tuple[str, int | None]:
+    """A time entry in `times:` can be a plain string "20:00", or a dict
+    {"time": "20:00", "count": 6} when the number of simultaneous
+    instances varies by slot (e.g. Dynamic Events spawning at 6 locations
+    at once). Returns (hh_mm, count_or_None)."""
+    if isinstance(t, dict):
+        return t["time"], t.get("count")
+    return t, None
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +183,8 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                 tier = entry.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
                     continue
-                for hh_mm in entry["times"]:
+                for time_entry in entry["times"]:
+                    hh_mm, count = parse_time_entry(time_entry)
                     if (day_str, region, hh_mm) in suppressed:
                         continue
                     spawns.append(
@@ -179,6 +195,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             at=slot_datetime(day, hh_mm, tz),
                             local_label=hh_mm,
                             source="weekly",
+                            count=count,
                         )
                     )
                     suppressed.add((day_str, region, hh_mm))
@@ -201,7 +218,8 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                 tier = entry.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
                     continue
-                for hh_mm in entry["times"]:
+                for time_entry in entry["times"]:
+                    hh_mm, count = parse_time_entry(time_entry)
                     if (day_str, region, hh_mm) in suppressed:
                         continue
                     spawns.append(
@@ -212,6 +230,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             at=slot_datetime(day, hh_mm, tz),
                             local_label=hh_mm,
                             source="biweekly",
+                            count=count,
                         )
                     )
                     suppressed.add((day_str, region, hh_mm))
@@ -228,7 +247,8 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                 tier = boss.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
                     continue
-                for hh_mm in boss["times"]:
+                for time_entry in boss["times"]:
+                    hh_mm, count = parse_time_entry(time_entry)
                     if (day_str, region, hh_mm) in suppressed:
                         continue
                     spawns.append(
@@ -239,6 +259,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             at=slot_datetime(day, hh_mm, tz),
                             local_label=hh_mm,
                             source="generic",
+                            count=count,
                         )
                     )
 
@@ -280,7 +301,11 @@ def format_message(spawn: Spawn) -> str:
     tier_label = "" if already_has_prefix or not spawn.tier else f"{tier_prefix} "
     mins = round(spawn.minutes_until)
     tag = {"override": " 📌", "weekly": " 🔁", "biweekly": " 🔁"}.get(spawn.source, "")
-    return f"⏰ **{tier_label}{spawn.name}**{tag} ({spawn.region}) in ~{mins} min — {spawn.local_label}"
+    count_label = f" ({spawn.count}x)" if spawn.count else ""
+    return (
+        f"⏰ **{tier_label}{spawn.name}**{count_label}{tag} "
+        f"({spawn.region}) in ~{mins} min — {spawn.local_label}"
+    )
 
 
 def post_to_discord(messages: list[str]) -> None:
