@@ -127,16 +127,25 @@ def parse_time_entry(t) -> tuple[str, int | None]:
 
 def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
     """
-    Layering, highest priority first:
-      1. overrides.yaml    — specific date, e.g. "on 2026-07-09 specifically..."
-      2. schedule.yaml `weekly`   — recurring by weekday, e.g. "every Wednesday..."
-      3. schedule.yaml `bosses`   — recurring every day (the generic fallback)
+    Layers, all additive by default: overrides, weekly, biweekly, and daily
+    generic entries all fire independently, even if they land on the same
+    clock time — because in practice, different event systems (e.g. Siege
+    and Field Bosses) can genuinely happen simultaneously, and silently
+    dropping one because it shares a time slot with another caused a real
+    missed notification.
 
-    A higher layer suppresses a lower layer only when they land on the
-    exact same (date, region, time) slot — otherwise both fire.
+    Suppression only happens when an entry explicitly opts in with a
+    `replaces: "Generic Entry Name"` field — meaning "this is a *specific
+    named instance* of that generic category, don't also ping the vague
+    version." Use this when you know the specific boss/location for a
+    slot that's otherwise generic (e.g. naming a Field Boss for a date via
+    overrides.yaml). Don't use it for a genuinely separate event that just
+    happens to share a clock time with something else (e.g. Siege doesn't
+    replace Field Bosses just because they're both at 21:00).
     """
     spawns: list[Spawn] = []
-    suppressed: set[tuple[str, str, str]] = set()  # (date_str, region, time)
+    # (date_str, region, time, generic_name_being_replaced)
+    suppressed: set[tuple[str, str, str, str]] = set()
 
     regions_cfg = schedule.get("regions", {})
 
@@ -149,7 +158,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
     if REGION_FILTER:
         all_regions &= set(REGION_FILTER)
 
-    # --- layer 1: date-specific overrides ---
+    # --- overrides (date-specific) ---
     for region in all_regions:
         tz = region_tz(schedule, region)
         for day in days_for(region):
@@ -168,9 +177,10 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                         source="override",
                     )
                 )
-                suppressed.add((day_str, region, entry["time"]))
+                if entry.get("replaces"):
+                    suppressed.add((day_str, region, entry["time"], entry["replaces"]))
 
-    # --- layer 2: weekly recurring (e.g. "every Wednesday") ---
+    # --- weekly recurring (e.g. "every Wednesday") ---
     for region, region_cfg in regions_cfg.items():
         if REGION_FILTER and region not in REGION_FILTER:
             continue
@@ -178,15 +188,13 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
         weekly_cfg = region_cfg.get("weekly", {})
         for day in days_for(region):
             day_str = day.isoformat()
-            weekday_name = day.strftime("%A")  # "Wednesday", etc.
+            weekday_name = day.strftime("%A")
             for entry in weekly_cfg.get(weekday_name, []):
                 tier = entry.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
                     continue
                 for time_entry in entry["times"]:
                     hh_mm, count = parse_time_entry(time_entry)
-                    if (day_str, region, hh_mm) in suppressed:
-                        continue
                     spawns.append(
                         Spawn(
                             region=region,
@@ -198,10 +206,11 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             count=count,
                         )
                     )
-                    suppressed.add((day_str, region, hh_mm))
+                    if entry.get("replaces"):
+                        suppressed.add((day_str, region, hh_mm, entry["replaces"]))
 
-    # --- layer 2b: biweekly recurring (e.g. "every other Sunday", anchored
-    # to a confirmed occurrence date) ---
+    # --- biweekly recurring (e.g. "every other Sunday", anchored to a
+    # confirmed occurrence date) ---
     for region, region_cfg in regions_cfg.items():
         if REGION_FILTER and region not in REGION_FILTER:
             continue
@@ -220,8 +229,6 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                     continue
                 for time_entry in entry["times"]:
                     hh_mm, count = parse_time_entry(time_entry)
-                    if (day_str, region, hh_mm) in suppressed:
-                        continue
                     spawns.append(
                         Spawn(
                             region=region,
@@ -233,9 +240,10 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                             count=count,
                         )
                     )
-                    suppressed.add((day_str, region, hh_mm))
+                    if entry.get("replaces"):
+                        suppressed.add((day_str, region, hh_mm, entry["replaces"]))
 
-    # --- layer 3: daily generic ---
+    # --- daily generic, skipped only where explicitly replaced above ---
     for region, region_cfg in regions_cfg.items():
         if REGION_FILTER and region not in REGION_FILTER:
             continue
@@ -249,7 +257,7 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                     continue
                 for time_entry in boss["times"]:
                     hh_mm, count = parse_time_entry(time_entry)
-                    if (day_str, region, hh_mm) in suppressed:
+                    if (day_str, region, hh_mm, boss["name"]) in suppressed:
                         continue
                     spawns.append(
                         Spawn(
