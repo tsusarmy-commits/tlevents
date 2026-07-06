@@ -3,7 +3,13 @@
 # Each region now has its OWN timezone (regions run on different clocks —
 # e.g. Americas is UTC-04:00, Europe is UTC+0), plus its list of bosses.
 #
-# `times` is a list because a boss/event can happen more than once a day.
+# `times` is a list of slots. Each slot is normally just a string
+# "HH:MM", but can instead be a dict {"time": "HH:MM", "count": N} when
+# multiple instances happen simultaneously at that slot (e.g. Dynamic
+# Events firing at 6 different locations at once, or 4 Arch Bosses
+# spawning together vs 2 on another day). The count just shows up in
+# the Discord message as "(6x)" — it's informational, not required.
+#
 # Times are in that region's own timezone, entered exactly as you see
 # them in-game/on questlog for that region.
 
@@ -29,11 +35,15 @@ regions:
       Wednesday:
         - name: "Arch Boss"
           tier: null
-          times: ["20:00", "23:00"]
+          times:
+            - {time: "20:00", count: 2}
+            - {time: "23:00", count: 2}
       Saturday:
         - name: "Arch Boss"
           tier: null
-          times: ["20:00", "23:00"]
+          times:
+            - {time: "20:00", count: 4}
+            - {time: "23:00", count: 4}
         - name: "Interserver"
           tier: null
           times: ["22:30"]
@@ -42,25 +52,27 @@ regions:
           tier: null
           times: ["22:30"]
       Sunday:
-        - name: "Tax"
+        - name: "Siege"
           tier: null
           times: ["21:00"]
           # Note: this happens to land on the same slot as the daily
-          # "Dynamic Events" at 21:00, so on Sundays you'll see "Tax"
+          # "Dynamic Events" at 21:00, so on Sundays you'll see "Siege"
           # instead of "Dynamic Events" at that specific time — not a
           # bug, just how the suppression logic works (one ping per
           # slot). Say the word if you'd rather see both.
     biweekly:
       Sunday:
-        - name: "Siege"
+        - name: "Tax"
           tier: null
           times: ["20:30"]
-          anchor_date: "2026-07-05"  # confirmed Siege Sunday from your screenshot
+          anchor_date: "2026-07-05"  # confirmed Tax Sunday, live in Discord
           interval_days: 14
-          # 2026-07-12 had no Siege in your screenshot, 2026-07-19 did —
-          # confirms this is a 14-day cadence, not weekly.
-      # All of the above (Arch Boss/Interserver/Tax/Siege) confirmed from
-      # your in-game weekly Timetable screenshot (5 Jul – 20 Jul window).
+          # 2026-07-12 had no event at 20:30 in the screenshot, 2026-07-19
+          # did — confirms this is a 14-day cadence, not weekly.
+      # All of the above (Arch Boss/Interserver/Siege/Tax) confirmed from
+      # your in-game weekly Timetable screenshot (5 Jul – 20 Jul window),
+      # with Tax/Siege names corrected after the live Discord ping showed
+      # the actual identity at each time.
 
   Europe:
     timezone: "UTC"
