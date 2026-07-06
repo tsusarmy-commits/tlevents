@@ -1,10 +1,10 @@
 {
   "notified_keys": [
     "Americas|Tax|2026-07-06T01:00:00+00:00",
+    "Americas|Siege|2026-07-06T00:30:00+00:00",
+    "Americas|Dynamic Events|2026-07-05T19:00:00+00:00",
     "Americas|Dynamic Events|2026-07-05T22:00:00+00:00",
     "Americas|Field Bosses|2026-07-05T23:00:00+00:00",
-    "Europe|Dynamic Events|2026-07-05T19:00:00+00:00",
-    "Americas|Dynamic Events|2026-07-05T19:00:00+00:00",
-    "Americas|Siege|2026-07-06T00:30:00+00:00"
+    "Europe|Dynamic Events|2026-07-05T19:00:00+00:00"
   ]
 }
