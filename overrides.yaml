@@ -7,16 +7,22 @@
 #     RegionName:
 #       - name: "..."
 #         tier: 3        # or null for non-tiered / guild events
-#         time: "HH:MM"  # in schedule.yaml's timezone
+#         time: "HH:MM"  # in schedule.yaml's timezone for that region
+#         replaces: "Field Bosses"   # OPTIONAL — see below
 #
-# If an entry here matches the SAME region + time as a generic entry in
-# schedule.yaml, the override replaces it for that day only (no duplicate
-# ping) — e.g. if schedule.yaml has a generic "Dynamic Events" at 19:00
-# Americas, and you add an override for Americas at 19:00 today, you'll
-# get the override's specific name instead of "Dynamic Events", once.
+# By default, an override is ADDITIVE — it fires alongside whatever
+# schedule.yaml already has at that time, even if they share a clock
+# time. This matters because different systems can genuinely happen
+# simultaneously (e.g. Siege and Field Bosses both at 21:00) — we don't
+# want to silently drop a real notification just because two things
+# share a time slot.
 #
-# If the time doesn't match anything in schedule.yaml, it's just an
-# additional one-off ping with no generic counterpart to replace.
+# Use `replaces` only when this override is a SPECIFIC NAMED INSTANCE of
+# an existing generic entry, and you want the specific name instead of
+# the vague one (not in addition to it) — e.g. schedule.yaml has a
+# generic "Field Bosses" at 19:00, and today you know it's specifically
+# a "Guild Siege vs Nova": add `replaces: "Field Bosses"` so you get one
+# ping with the real name, not two pings (one vague, one specific).
 #
 # --- Worked example (delete once you've got real data in here) ---
 # 2026-07-05:
@@ -24,6 +30,8 @@
 #     - name: "Guild Siege vs Nova"
 #       tier: null
 #       time: "19:00"
+#       replaces: "Field Bosses"
 #     - name: "World Boss: Talus"
 #       tier: 3
 #       time: "13:00"
+#       replaces: "Field Bosses"
