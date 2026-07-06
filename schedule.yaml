@@ -25,7 +25,11 @@ regions:
         times: ["01:00", "04:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"]
       - name: "Field Bosses"
         tier: null
-        times: ["02:00", "05:00", "08:00", "19:00", "22:00"]
+        times: ["02:00", "05:00", "08:00", "19:00", "21:00", "22:00"]
+        # 21:00 added after a live Discord ping confirmed a Field Boss
+        # there too, concurrent with Siege — see the note on suppression
+        # design in bot.py: different systems no longer suppress each
+        # other just for sharing a clock time.
       # Confirmed identical pattern across Sun/Mon/Tue screenshots.
       #
       # questlog doesn't name which specific boss appears in a given
@@ -55,11 +59,11 @@ regions:
         - name: "Siege"
           tier: null
           times: ["21:00"]
-          # Note: this happens to land on the same slot as the daily
-          # "Dynamic Events" at 21:00, so on Sundays you'll see "Siege"
-          # instead of "Dynamic Events" at that specific time — not a
-          # bug, just how the suppression logic works (one ping per
-          # slot). Say the word if you'd rather see both.
+          # Fires alongside whatever else is generically scheduled at
+          # 21:00 (Dynamic Events, Field Bosses) rather than replacing
+          # them — see bot.py's suppression design notes. Add a
+          # `replaces: "Dynamic Events"` field here if you'd rather this
+          # swap out the generic ping instead of adding to it.
     biweekly:
       Sunday:
         - name: "Tax"
