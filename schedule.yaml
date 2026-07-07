@@ -37,11 +37,51 @@ regions:
       # in-game, add it to overrides.yaml rather than editing this.
     weekly:
       Wednesday:
-        - name: "Arch Boss"
-          tier: null
-          times:
-            - {time: "20:00", count: 2}
-            - {time: "23:00", count: 2}
+        # Confirmed from in-game hourly screenshots. Matches Tuesday's
+        # pattern almost exactly, except 00:30 is a boss here instead of
+        # a Dynamic Event.
+        add:
+          - name: "Arch Boss"
+            tier: null
+            times:
+              - {time: "20:00", count: 2}
+              - {time: "23:00", count: 2}
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "00:00", count: 2}
+              - {time: "00:30", count: 1}
+              - {time: "14:00", count: 2}
+              - {time: "17:00", count: 2}
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "02:00", count: 2}
+            replaces: "Field Bosses"
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "07:00", count: 6}
+              - {time: "10:00", count: 6}
+              - {time: "13:00", count: 6}
+              - {time: "16:00", count: 6}
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "01:00", count: 6}
+              - {time: "04:00", count: 6}
+            replaces: "Dynamic Events"
+        suppress:
+          - {name: "Dynamic Events", time: "06:00"}
+          - {name: "Dynamic Events", time: "09:00"}
+          - {name: "Dynamic Events", time: "12:00"}
+          - {name: "Dynamic Events", time: "15:00"}
+          - {name: "Dynamic Events", time: "18:00"}
+          - {name: "Field Bosses", time: "05:00"}
+          - {name: "Field Bosses", time: "08:00"}
+          - {name: "Field Bosses", time: "19:00"}
+          # Evening (20:00-23:59) besides Arch Boss not yet confirmed —
+          # generic template still applies there as an unverified guess.
       Saturday:
         - name: "Arch Boss"
           tier: null
@@ -84,10 +124,13 @@ regions:
               - {time: "21:30", count: 1}
               # 21:30, not 21:00 — the boss slot shifts within the hour
               # on different days, so don't assume it's always :00.
-          - name: "Dynamic Events"
+          - name: "Guild Boss"
             tier: null
             times:
               - {time: "00:30", count: 1}
+          - name: "Dynamic Events"
+            tier: null
+            times:
               - {time: "07:00", count: 6}
               - {time: "10:00", count: 6}
               - {time: "13:00", count: 6}
