@@ -181,6 +181,11 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                     suppressed.add((day_str, region, entry["time"], entry["replaces"]))
 
     # --- weekly recurring (e.g. "every Wednesday") ---
+    # A weekday's config can be either:
+    #   - a plain list of entries (old format — pure additions), or
+    #   - a dict with `add` (list of entries) and/or `suppress` (list of
+    #     {name, time} pairs meaning "this generic slot doesn't happen on
+    #     this weekday, don't ping it at all — no replacement fires").
     for region, region_cfg in regions_cfg.items():
         if REGION_FILTER and region not in REGION_FILTER:
             continue
@@ -189,7 +194,19 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
         for day in days_for(region):
             day_str = day.isoformat()
             weekday_name = day.strftime("%A")
-            for entry in weekly_cfg.get(weekday_name, []):
+            weekday_cfg = weekly_cfg.get(weekday_name, [])
+
+            if isinstance(weekday_cfg, dict):
+                add_entries = weekday_cfg.get("add", [])
+                suppress_entries = weekday_cfg.get("suppress", [])
+            else:
+                add_entries = weekday_cfg
+                suppress_entries = []
+
+            for s in suppress_entries:
+                suppressed.add((day_str, region, s["time"], s["name"]))
+
+            for entry in add_entries:
                 tier = entry.get("tier")
                 if TIER_FILTER and tier not in TIER_FILTER:
                     continue
