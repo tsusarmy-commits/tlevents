@@ -105,12 +105,6 @@ regions:
               - {time: "22:00", count: 13}
             replaces: "Field Bosses"  # generic template wrongly assumed
             # a regular Field Boss at 22:00 — it's actually this instead.
-          - name: "Interserver"
-            tier: null
-            times: ["22:30"]
-            # New discovery: Interserver isn't Fri/Sat-only after all —
-            # worth assuming it might show up other days too until we've
-            # checked the remaining weekdays.
         suppress:
           - {name: "Dynamic Events", time: "06:00"}
           - {name: "Dynamic Events", time: "09:00"}
