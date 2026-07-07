@@ -64,6 +64,67 @@ regions:
           # them — see bot.py's suppression design notes. Add a
           # `replaces: "Dynamic Events"` field here if you'd rather this
           # swap out the generic ping instead of adding to it.
+      Tuesday:
+        # Confirmed from in-game hourly screenshots (07/07), full day now.
+        add:
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "00:00", count: 2}
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "02:00", count: 2}
+            replaces: "Field Bosses"
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "14:00", count: 2}
+              - {time: "17:00", count: 2}
+              - {time: "21:30", count: 1}
+              # 21:30, not 21:00 — the boss slot shifts within the hour
+              # on different days, so don't assume it's always :00.
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "00:30", count: 1}
+              - {time: "07:00", count: 6}
+              - {time: "10:00", count: 6}
+              - {time: "13:00", count: 6}
+              - {time: "16:00", count: 6}
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "01:00", count: 6}
+              - {time: "04:00", count: 6}
+              - {time: "21:00", count: 6}
+            replaces: "Dynamic Events"
+          - name: "Stone Fight"
+            tier: null
+            times:
+              - {time: "22:00", count: 13}
+            replaces: "Field Bosses"  # generic template wrongly assumed
+            # a regular Field Boss at 22:00 — it's actually this instead.
+          - name: "Interserver"
+            tier: null
+            times: ["22:30"]
+            # New discovery: Interserver isn't Fri/Sat-only after all —
+            # worth assuming it might show up other days too until we've
+            # checked the remaining weekdays.
+        suppress:
+          - {name: "Dynamic Events", time: "06:00"}
+          - {name: "Dynamic Events", time: "09:00"}
+          - {name: "Dynamic Events", time: "12:00"}
+          - {name: "Dynamic Events", time: "15:00"}
+          - {name: "Dynamic Events", time: "18:00"}
+          - {name: "Field Bosses", time: "05:00"}
+          - {name: "Field Bosses", time: "08:00"}
+          - {name: "Field Bosses", time: "19:00"}
+          - {name: "Field Bosses", time: "21:00"}
+          # ^ real boss is 21:30 on Tuesday, not 21:00 — see the 21:30
+          # entry above. 05:00/08:00 were genuinely empty in the
+          # screenshot too, not Field Bosses as the generic template
+          # assumes from Sunday's data.
     biweekly:
       Sunday:
         - name: "Tax"
