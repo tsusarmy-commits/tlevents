@@ -19,6 +19,15 @@ regions:
     # observe DST and currently matches this offset, but they'll diverge by
     # an hour once Eastern falls back to standard time in Nov — worth
     # re-checking then whether questlog's displayed offset also shifts.
+    intervals:
+      # Fixed-interval recurring events — not tied to a specific clock
+      # time or weekday, just "every N minutes from this anchor point."
+      - name: "Wall"
+        tier: null
+        anchor: "2026-07-08T00:28:00"  # a confirmed occurrence, local time
+        interval_minutes: 197  # measured from two confirmed occurrences
+        # (00:28 -> 03:45). Re-anchor and re-measure if it ever drifts
+        # noticeably from predicted times.
     bosses:
       - name: "Dynamic Events"
         tier: null
