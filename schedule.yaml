@@ -53,8 +53,8 @@ regions:
           - name: "Arch Boss"
             tier: null
             times:
-              - {time: "20:00", count: 2}
-              - {time: "23:00", count: 2}
+              - {time: "20:00", count: 4}
+              - {time: "23:00", count: 4}
           - name: "Field Bosses"
             tier: null
             times:
@@ -62,6 +62,8 @@ regions:
               - {time: "00:30", count: 1}
               - {time: "14:00", count: 2}
               - {time: "17:00", count: 2}
+              - {time: "21:30", count: 1}
+              - {time: "23:00", count: 2}
           - name: "Field Bosses"
             tier: null
             times:
@@ -79,6 +81,7 @@ regions:
             times:
               - {time: "01:00", count: 6}
               - {time: "04:00", count: 6}
+              - {time: "21:00", count: 6}
             replaces: "Dynamic Events"
         suppress:
           - {name: "Dynamic Events", time: "06:00"}
@@ -89,8 +92,10 @@ regions:
           - {name: "Field Bosses", time: "05:00"}
           - {name: "Field Bosses", time: "08:00"}
           - {name: "Field Bosses", time: "19:00"}
-          # Evening (20:00-23:59) besides Arch Boss not yet confirmed —
-          # generic template still applies there as an unverified guess.
+          - {name: "Field Bosses", time: "21:00"}
+          - {name: "Field Bosses", time: "22:00"}
+          # ^ real boss is 21:30 on Wednesday, not 21:00 (matches
+          # Tuesday's pattern). 22:00 confirmed empty.
       Saturday:
         - name: "Arch Boss"
           tier: null
