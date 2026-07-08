@@ -61,6 +61,17 @@ REGION_FILTER = [r.strip() for r in ACTIVE_REGION.split(",") if r.strip()]
 # Empty list = all tiers (including Dynamic Events / guild events, tier: null).
 TIER_FILTER: list[int] = []  # e.g. [3] for T3-only pings
 
+# Discord embed colors (decimal, not hex string) per event name. Anything
+# not listed falls back to DEFAULT_COLOR (purple — covers Field Bosses,
+# Guild Boss, Stone Fight, Siege, Tax, Interserver, and anything named
+# via overrides.yaml that isn't explicitly mapped here).
+EVENT_COLORS = {
+    "Dynamic Events": 0x2ECC71,  # green
+    "Wall": 0x3498DB,  # blue
+    "Arch Boss": 0xE74C3C,  # red
+}
+DEFAULT_COLOR = 0x9B59B6  # purple
+
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -288,6 +299,44 @@ def build_spawns(schedule: dict, overrides: dict, now: datetime) -> list[Spawn]:
                         )
                     )
 
+    # --- fixed-interval recurring (e.g. "Wall", every 197 min from an
+    # anchor timestamp — not tied to specific clock times or weekdays) ---
+    for region, region_cfg in regions_cfg.items():
+        if REGION_FILTER and region not in REGION_FILTER:
+            continue
+        tz = region_tz(schedule, region)
+        for entry in region_cfg.get("intervals", []):
+            tier = entry.get("tier")
+            if TIER_FILTER and tier not in TIER_FILTER:
+                continue
+            anchor_naive = datetime.fromisoformat(entry["anchor"])
+            anchor = anchor_naive.replace(tzinfo=tz).astimezone(dt_timezone.utc)
+            interval = timedelta(minutes=entry["interval_minutes"])
+
+            # Find the occurrence index nearest to (and not too far past) now,
+            # then walk forward generating occurrences within the same
+            # ~48h lookahead window the other layers use.
+            steps_since_anchor = (now - anchor) / interval
+            start_k = int(steps_since_anchor) - 1  # small buffer backwards
+            k = start_k
+            while True:
+                occ = anchor + k * interval
+                if occ > now + timedelta(hours=48):
+                    break
+                if occ >= now - timedelta(hours=1):
+                    spawns.append(
+                        Spawn(
+                            region=region,
+                            name=entry["name"],
+                            tier=tier,
+                            at=occ,
+                            local_label=occ.astimezone(tz).strftime("%H:%M"),
+                            source="interval",
+                            count=entry.get("count"),
+                        )
+                    )
+                k += 1
+
     return spawns
 
 
@@ -333,18 +382,27 @@ def format_message(spawn: Spawn) -> str:
     )
 
 
-def post_to_discord(messages: list[str]) -> None:
-    if not messages:
+def embed_for(spawn: Spawn) -> dict:
+    return {
+        "description": format_message(spawn),
+        "color": EVENT_COLORS.get(spawn.name, DEFAULT_COLOR),
+    }
+
+
+def post_to_discord(spawns: list[Spawn]) -> None:
+    if not spawns:
         return
+    embeds = [embed_for(s) for s in spawns]
     if DISCORD_WEBHOOK_URL == "PUT_YOUR_WEBHOOK_URL_HERE":
         print("[warn] DISCORD_WEBHOOK_URL not set — printing instead:")
-        for m in messages:
-            print(m)
+        for s in spawns:
+            print(format_message(s))
         return
-    resp = requests.post(
-        DISCORD_WEBHOOK_URL, json={"content": "\n".join(messages)}, timeout=10
-    )
-    resp.raise_for_status()
+    # Discord allows max 10 embeds per message — batch just in case.
+    for i in range(0, len(embeds), 10):
+        batch = embeds[i : i + 10]
+        resp = requests.post(DISCORD_WEBHOOK_URL, json={"embeds": batch}, timeout=10)
+        resp.raise_for_status()
 
 
 # ---------------------------------------------------------------------------
@@ -370,8 +428,8 @@ def main() -> None:
             to_send.append(spawn)
             notified.add(spawn.key)
 
-    messages = [format_message(s) for s in sorted(to_send, key=lambda s: s.at)]
-    post_to_discord(messages)
+    to_send.sort(key=lambda s: s.at)
+    post_to_discord(to_send)
 
     state["notified_keys"] = list(notified)
     save_state(state)
@@ -379,7 +437,7 @@ def main() -> None:
     print(
         f"Region(s): {REGION_FILTER or 'all'} | "
         f"Checked {len(spawns)} scheduled spawns | "
-        f"Sent {len(messages)} notifications."
+        f"Sent {len(to_send)} notifications."
     )
 
 
