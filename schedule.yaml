@@ -176,6 +176,27 @@ regions:
           # entry above. 05:00/08:00 were genuinely empty in the
           # screenshot too, not Field Bosses as the generic template
           # assumes from Sunday's data.
+      Thursday:
+        # Reported directly (not from screenshots) — no count data given,
+        # so counts are left off these entries.
+        add:
+          - name: "Field Bosses"
+            tier: null
+            times: ["00:00", "00:30", "14:00", "17:00", "21:30", "23:00"]
+          - name: "Dynamic Events"
+            tier: null
+            times: ["07:00", "10:00", "13:00", "16:00", "20:00", "23:00"]
+        suppress:
+          - {name: "Field Bosses", time: "05:00"}
+          - {name: "Field Bosses", time: "08:00"}
+          - {name: "Field Bosses", time: "19:00"}
+          - {name: "Field Bosses", time: "22:00"}
+          - {name: "Dynamic Events", time: "06:00"}
+          - {name: "Dynamic Events", time: "09:00"}
+          - {name: "Dynamic Events", time: "12:00"}
+          - {name: "Dynamic Events", time: "15:00"}
+          - {name: "Dynamic Events", time: "18:00"}
+          - {name: "Dynamic Events", time: "21:00"}
     biweekly:
       Sunday:
         - name: "Tax"
