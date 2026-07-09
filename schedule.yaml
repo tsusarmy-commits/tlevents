@@ -24,10 +24,9 @@ regions:
       # time or weekday, just "every N minutes from this anchor point."
       - name: "Wall"
         tier: null
-        anchor: "2026-07-08T00:28:00"  # a confirmed occurrence, local time
-        interval_minutes: 197  # measured from two confirmed occurrences
-        # (00:28 -> 03:45). Re-anchor and re-measure if it ever drifts
-        # noticeably from predicted times.
+        anchor: "2026-07-09T12:42:00"  # re-anchored post-maintenance, local time
+        interval_minutes: 197  # kept from prior measurement — confirm again
+        # if it drifts noticeably from predicted times.
     bosses:
       - name: "Dynamic Events"
         tier: null
