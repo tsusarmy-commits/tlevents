@@ -106,10 +106,10 @@ regions:
           times: ["22:30"]
       Friday:
         # Confirmed 2026-07-10 — matches the Tue/Wed core pattern (00:00,
-        # 00:30, 14:00, 17:00, 21:30 Field Bosses; 01/04/07/10/13/16/21
-        # Dynamic Events). The old 22:00/23:00 slot (Stone Fight on Tue,
-        # plain Field Bosses on Wed/Thu) is intentionally left out — no
-        # confirmed event there on Friday.
+        # 00:30, 14:00, 17:00, 21:30, 23:00 Field Bosses; 01/04/07/10/13/16/21
+        # Dynamic Events). 23:00 confirmed live in Discord — a plain Field
+        # Boss like Wednesday, not Stone Fight like Tuesday. Count assumed
+        # 2x to match Wednesday's confirmed 23:00 — correct if wrong.
         add:
           - name: "Field Bosses"
             tier: null
@@ -119,6 +119,7 @@ regions:
               - {time: "14:00", count: 2}
               - {time: "17:00", count: 2}
               - {time: "21:30", count: 1}
+              - {time: "23:00", count: 2}
           - name: "Field Bosses"
             tier: null
             times:
