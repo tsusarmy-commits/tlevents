@@ -105,9 +105,52 @@ regions:
           tier: null
           times: ["22:30"]
       Friday:
-        - name: "Interserver"
-          tier: null
-          times: ["22:30"]
+        # Confirmed 2026-07-10 — matches the Tue/Wed core pattern (00:00,
+        # 00:30, 14:00, 17:00, 21:30 Field Bosses; 01/04/07/10/13/16/21
+        # Dynamic Events). The old 22:00/23:00 slot (Stone Fight on Tue,
+        # plain Field Bosses on Wed/Thu) is intentionally left out — no
+        # confirmed event there on Friday.
+        add:
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "00:00", count: 2}
+              - {time: "00:30", count: 1}
+              - {time: "14:00", count: 2}
+              - {time: "17:00", count: 2}
+              - {time: "21:30", count: 1}
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "02:00", count: 2}
+            replaces: "Field Bosses"
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "07:00", count: 6}
+              - {time: "10:00", count: 6}
+              - {time: "13:00", count: 6}
+              - {time: "16:00", count: 6}
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "01:00", count: 6}
+              - {time: "04:00", count: 6}
+              - {time: "21:00", count: 6}
+            replaces: "Dynamic Events"
+          - name: "Interserver"
+            tier: null
+            times: ["22:30"]
+        suppress:
+          - {name: "Dynamic Events", time: "06:00"}
+          - {name: "Dynamic Events", time: "09:00"}
+          - {name: "Dynamic Events", time: "12:00"}
+          - {name: "Dynamic Events", time: "15:00"}
+          - {name: "Dynamic Events", time: "18:00"}
+          - {name: "Field Bosses", time: "05:00"}
+          - {name: "Field Bosses", time: "08:00"}
+          - {name: "Field Bosses", time: "19:00"}
+          - {name: "Field Bosses", time: "21:00"}
       Sunday:
         - name: "Siege"
           tier: null
