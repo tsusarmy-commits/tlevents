@@ -96,14 +96,59 @@ regions:
           # ^ real boss is 21:30 on Wednesday, not 21:00 (matches
           # Tuesday's pattern). 22:00 confirmed empty.
       Saturday:
-        - name: "Arch Boss"
-          tier: null
-          times:
-            - {time: "20:00", count: 4}
-            - {time: "23:00", count: 4}
-        - name: "Interserver"
-          tier: null
-          times: ["22:30"]
+        # Field Bosses/Dynamic Events layer inferred from the Tue/Wed/Thu/Fri
+        # core pattern (not yet screenshot-confirmed for Saturday itself —
+        # verify in-game and correct if off). Arch Boss/Interserver were
+        # already confirmed via the in-game weekly Timetable screenshot.
+        # 23:00 confirmed to have BOTH Arch Boss and a plain Field Boss
+        # firing together, same slot.
+        add:
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "00:00", count: 2}
+              - {time: "00:30", count: 1}
+              - {time: "14:00", count: 2}
+              - {time: "17:00", count: 2}
+              - {time: "21:30", count: 1}
+              - {time: "23:00", count: 2}
+          - name: "Field Bosses"
+            tier: null
+            times:
+              - {time: "02:00", count: 2}
+            replaces: "Field Bosses"
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "07:00", count: 6}
+              - {time: "10:00", count: 6}
+              - {time: "13:00", count: 6}
+              - {time: "16:00", count: 6}
+          - name: "Dynamic Events"
+            tier: null
+            times:
+              - {time: "01:00", count: 6}
+              - {time: "04:00", count: 6}
+              - {time: "21:00", count: 6}
+            replaces: "Dynamic Events"
+          - name: "Arch Boss"
+            tier: null
+            times:
+              - {time: "20:00", count: 4}
+              - {time: "23:00", count: 4}
+          - name: "Interserver"
+            tier: null
+            times: ["22:30"]
+        suppress:
+          - {name: "Dynamic Events", time: "06:00"}
+          - {name: "Dynamic Events", time: "09:00"}
+          - {name: "Dynamic Events", time: "12:00"}
+          - {name: "Dynamic Events", time: "15:00"}
+          - {name: "Dynamic Events", time: "18:00"}
+          - {name: "Field Bosses", time: "05:00"}
+          - {name: "Field Bosses", time: "08:00"}
+          - {name: "Field Bosses", time: "19:00"}
+          - {name: "Field Bosses", time: "21:00"}
       Friday:
         # Confirmed 2026-07-10 — matches the Tue/Wed core pattern (00:00,
         # 00:30, 14:00, 17:00, 21:30, 23:00 Field Bosses; 01/04/07/10/13/16/21
